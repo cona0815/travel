@@ -302,12 +302,33 @@
         </div>
     </div>
 
+    <!-- Budget Setting Modal (New) -->
+    <div id="budget-modal" class="modal-overlay" onclick="if(event.target===this) closeBudgetModal()">
+        <div class="modal-content h-auto max-w-[400px]">
+            <div class="bg-tokyo-blue text-white p-4 flex justify-between items-center shadow-sm z-10">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 p-2 rounded-full"><i data-lucide="settings-2" class="w-5 h-5 text-white"></i></div>
+                    <h3 class="font-bold text-lg tracking-wide">設定預算</h3>
+                </div>
+                <button onclick="closeBudgetModal()" class="bg-white/20 hover:bg-white/40 p-2 rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 bg-tokyo-bg">
+                <label class="block text-sm font-bold text-gray-500 uppercase tracking-wide mb-2">總預算金額 (TWD)</label>
+                <input type="number" id="budget-input" class="w-full bg-white rounded-xl p-4 text-xl font-mono font-black text-tokyo-ink outline-none focus:ring-2 focus:ring-tokyo-blue border-none mb-6 text-center" placeholder="例如: 60000">
+                <button onclick="saveBudgetFromModal()" class="nook-btn bg-tokyo-blue text-white border-[#3AAFA9] w-full py-3 shadow-md hover:bg-[#3AAFA9] flex justify-center items-center gap-2">
+                    <i data-lucide="check" class="w-5 h-5"></i> 儲存設定
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Hidden Input -->
     <input type="file" id="fileImportShopping" accept=".json" style="display: none;" onchange="handleFileImport(this, 'shopping')">
     <input type="file" id="fileImportPacking" accept=".json" style="display: none;" onchange="handleFileImport(this, 'packing')">
 
     <script>
-        const STORAGE_KEY = 'tokyo_v40_6days_custom';
+        // *** 這裡修改了 STORAGE_KEY (v41_2026_jan) 以確保強制讀取新資料 ***
+        const STORAGE_KEY = 'tokyo_v41_2026_jan';
         let currentState = { activeTab: 'day1', activeToolId: null, activePhraseCategory: null, showTextBackup: false };
 
         // --- 1. Utilities ---
@@ -388,10 +409,12 @@
             config: { 
                 currencyRate: 0.22, 
                 budgetTWD: 60000, 
-                outboundDate: '', 
-                outboundNo: '', 
-                returnDate: '', 
-                returnNo: '', 
+                outboundDate: '2026-01-26T13:30', 
+                outboundNo: 'NH852', 
+                outboundNote: '座位號碼：\n25A、24A、25B、24B\n(ANA 集團 Air Japan 營運)',
+                returnDate: '2026-01-31T12:40', 
+                returnNo: 'NH853', 
+                returnNote: '座位號碼：\n24B、25B、24A、25A\n(全日本空輸營運)\n備註：已收到機型異動通知',
                 isFlightEditMode: false 
             },
             webLinks: [
@@ -544,7 +567,12 @@
                 { id: 's11', category: '藥妝', recipient: '自己', item: '肌研極潤 精緻高效保濕精華霜', location: '上野 松本清 / OS Drug', note: '紅色罐裝 (Perfect Gel)', checked: false },
                 { id: 's12', category: '藥妝', recipient: '自己', item: 'LION Check-Up 小紅管牙膏 (標準款)', location: '上野 OS Drug', note: '高氟防蛀 (Standard)', checked: false },
                 { id: 's13', category: '藥妝', recipient: '自己', item: 'LION Check-Up 小金管牙膏 (護齦)', location: '上野 OS Drug', note: '牙根護理 (Rootcare)', checked: false },
-                { id: 's14', category: '伴手禮', recipient: '自己/親友', item: '一蘭拉麵 (博多細麵直條麵)', location: '唐吉訶德 / 一蘭店舖', note: '盒裝或袋裝皆可', checked: false }
+                { id: 's14', category: '伴手禮', recipient: '自己/親友', item: '一蘭拉麵 (博多細麵直條麵)', location: '唐吉訶德 / 一蘭店舖', note: '盒裝或袋裝皆可', checked: false },
+                { id: 's_os1', category: '衣物', recipient: '自己', item: '岡山okamoto保暖襪', location: '上野 OS Drug', note: '保暖必備', checked: false },
+                { id: 's_os2', category: '藥妝', recipient: '自己', item: '大正漢方 胃腸藥微粒 48包', location: '上野 OS Drug', note: '常備藥', checked: false },
+                { id: 's_os3', category: '藥妝', recipient: '自己', item: 'Melano CC酵素洗面乳', location: '上野 OS Drug', note: '人氣商品', checked: false },
+                { id: 's_os4', category: '藥妝', recipient: '自己', item: 'EVE 止痛藥', location: '上野 OS Drug', note: '頭痛生理痛', checked: false },
+                { id: 's_os5', category: '藥妝', recipient: '自己', item: '曼秀雷敦 蕁麻疹軟膏', location: '上野 OS Drug', note: '止癢', checked: false }
             ],
             // --- 行李清單 ---
             packingList: [
@@ -1018,6 +1046,35 @@
         }
 
         // --- Render: Budget ---
+        // 新增：開啟預算視窗
+        function openBudgetModal() {
+            const current = appData.config.budgetTWD;
+            document.getElementById('budget-input').value = current;
+            document.getElementById('budget-modal').classList.add('active');
+            // 聚焦輸入框
+            setTimeout(() => document.getElementById('budget-input').focus(), 100);
+        }
+        
+        // 新增：關閉預算視窗
+        function closeBudgetModal() {
+            document.getElementById('budget-modal').classList.remove('active');
+        }
+
+        // 新增：儲存預算
+        function saveBudgetFromModal() {
+            const input = document.getElementById('budget-input').value;
+            const val = parseInt(input);
+            if (!isNaN(val) && val >= 0) {
+                appData.config.budgetTWD = val;
+                saveAll();
+                renderBudget();
+                closeBudgetModal();
+                showToast("✅ 預算已更新");
+            } else {
+                alert("請輸入有效的金額 (數字)");
+            }
+        }
+
         function addBudgetExpense() {
             const item = document.getElementById('expItem').value.trim();
             const recipient = document.getElementById('expRecipient').value.trim() || '自己';
@@ -1033,19 +1090,27 @@
         function renderBudget() {
             const total = Math.round(appData.expenses.reduce((a,b)=>a+b.priceJPY,0) * appData.config.currencyRate);
             const budget = appData.config.budgetTWD;
-            const pct = Math.min(100, Math.round((total/budget)*100));
+            const pct = budget > 0 ? Math.min(100, Math.round((total/budget)*100)) : 0;
 
             document.getElementById('content-area').innerHTML = `
             ${getBackHeaderHTML('預算與記帳', 'Expense Tracker')}
-            <div class="bright-card p-6 mb-6">
-                <div class="flex justify-between items-end">
+            <div class="bright-card p-6 mb-6 relative group overflow-visible">
+                <!-- 更新按鈕：改成呼叫 openBudgetModal -->
+                <button onclick="openBudgetModal()" class="absolute top-4 right-4 bg-tokyo-bg text-tokyo-ink p-2 rounded-full hover:bg-tokyo-blue hover:text-white transition-colors shadow-md z-50 flex items-center gap-1 cursor-pointer border border-tokyo-gray active:scale-95" title="修改預算">
+                    <span class="text-xs font-bold hidden group-hover:inline">設定預算</span>
+                    <i data-lucide="settings-2" class="w-4 h-4 pointer-events-none"></i>
+                </button>
+                <div class="flex justify-between items-end relative z-0">
                     <div>
                         <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Spent (TWD)</p>
                         <h3 class="text-4xl font-black text-tokyo-ink tracking-tight">NT$${total.toLocaleString()}</h3>
                     </div>
-                    <div class="text-right">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Remaining</p>
-                        <h3 class="text-2xl font-black ${budget-total < 0 ? 'text-red-500' : 'text-green-500'}">NT$${(budget-total).toLocaleString()}</h3>
+                    <div class="text-right mt-8 md:mt-0">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Remaining / Budget</p>
+                        <h3 class="text-2xl font-black ${budget-total < 0 ? 'text-red-500' : 'text-green-500'}">
+                            NT$${(budget-total).toLocaleString()} 
+                            <span class="text-sm text-gray-400 font-bold">/ ${budget.toLocaleString()}</span>
+                        </h3>
                     </div>
                 </div>
                 <div class="w-full bg-tokyo-gray h-4 mt-6 rounded-full overflow-hidden border border-white"><div class="bg-tokyo-gold h-full rounded-full" style="width: ${pct}%"></div></div>
@@ -1241,19 +1306,23 @@
 
             if (c.isFlightEditMode) {
                 container.innerHTML = `
-                    <div class="space-y-4">
-                        <div class="space-y-2">
-                            <label class="text-sm font-bold text-gray-500 uppercase tracking-wide">Outbound (去程)</label>
-                            <input type="datetime-local" id="fOutDate" value="${c.outboundDate}" class="w-full bg-white rounded-xl p-3 text-base font-mono font-bold text-tokyo-ink outline-none focus:ring-2 focus:ring-tokyo-blue border-none">
-                            <input type="text" id="fOutNo" value="${c.outboundNo}" placeholder="ex: DAL-01" class="w-full bg-white rounded-xl p-3 text-base font-mono uppercase font-black text-tokyo-blue outline-none focus:ring-2 focus:ring-tokyo-blue border-none">
+                    <div class="space-y-6">
+                        <div class="space-y-2 bg-white p-4 rounded-2xl shadow-sm border border-tokyo-bg">
+                            <label class="text-sm font-bold text-gray-500 uppercase tracking-wide flex items-center gap-2"><i data-lucide="plane" class="w-4 h-4"></i> Outbound (去程)</label>
+                            <input type="datetime-local" id="fOutDate" value="${c.outboundDate}" class="w-full bg-tokyo-bg rounded-xl p-3 text-base font-mono font-bold text-tokyo-ink outline-none focus:ring-2 focus:ring-tokyo-blue border-none mb-2">
+                            <input type="text" id="fOutNo" value="${c.outboundNo}" placeholder="航班號 (ex: NH852)" class="w-full bg-tokyo-bg rounded-xl p-3 text-base font-mono uppercase font-black text-tokyo-blue outline-none focus:ring-2 focus:ring-tokyo-blue border-none mb-2">
+                            <textarea id="fOutNote" placeholder="筆記 (例如: 座位號碼、航廈資訊)" class="w-full bg-tokyo-bg rounded-xl p-3 text-sm font-bold text-gray-600 outline-none focus:ring-2 focus:ring-tokyo-blue border-none h-24 resize-none">${c.outboundNote || ''}</textarea>
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-sm font-bold text-gray-500 uppercase tracking-wide">Return (回程)</label>
-                            <input type="datetime-local" id="fRetDate" value="${c.returnDate}" class="w-full bg-white rounded-xl p-3 text-base font-mono font-bold text-tokyo-ink outline-none focus:ring-2 focus:ring-tokyo-blue border-none">
-                            <input type="text" id="fRetNo" value="${c.returnNo}" placeholder="ex: DAL-02" class="w-full bg-white rounded-xl p-3 text-base font-mono uppercase font-black text-tokyo-blue outline-none focus:ring-2 focus:ring-tokyo-blue border-none">
+
+                        <div class="space-y-2 bg-white p-4 rounded-2xl shadow-sm border border-tokyo-bg">
+                            <label class="text-sm font-bold text-gray-500 uppercase tracking-wide flex items-center gap-2"><i data-lucide="plane" class="w-4 h-4"></i> Return (回程)</label>
+                            <input type="datetime-local" id="fRetDate" value="${c.returnDate}" class="w-full bg-tokyo-bg rounded-xl p-3 text-base font-mono font-bold text-tokyo-ink outline-none focus:ring-2 focus:ring-tokyo-blue border-none mb-2">
+                            <input type="text" id="fRetNo" value="${c.returnNo}" placeholder="航班號 (ex: NH853)" class="w-full bg-tokyo-bg rounded-xl p-3 text-base font-mono uppercase font-black text-tokyo-blue outline-none focus:ring-2 focus:ring-tokyo-blue border-none mb-2">
+                            <textarea id="fRetNote" placeholder="筆記 (例如: 座位號碼、接送資訊)" class="w-full bg-tokyo-bg rounded-xl p-3 text-sm font-bold text-gray-600 outline-none focus:ring-2 focus:ring-tokyo-blue border-none h-24 resize-none">${c.returnNote || ''}</textarea>
                         </div>
-                        <div class="flex gap-3 pt-4">
-                            <button onclick="saveFlightSettings()" class="nook-btn bg-tokyo-blue text-white border-[#3AAFA9] flex-1 py-3 shadow-md">儲存設定</button>
+
+                        <div class="flex gap-3 pt-2">
+                            <button onclick="saveFlightSettings()" class="nook-btn bg-tokyo-blue text-white border-[#3AAFA9] flex-1 py-3 shadow-md flex justify-center items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> 儲存設定</button>
                             <button onclick="appData.config.isFlightEditMode=false;renderFlightWidget();" class="nook-btn bg-white text-gray-500 border-gray-300 flex-1 py-3 shadow-sm">取消</button>
                         </div>
                     </div>`;
@@ -1293,28 +1362,40 @@
 
                 container.innerHTML = `
                     <div class="text-center mb-8 relative bg-white p-6 rounded-3xl shadow-sm border-2 border-tokyo-gray">
-                        <button onclick="appData.config.isFlightEditMode=true;renderFlightWidget();" class="absolute top-4 right-4 text-gray-300 hover:text-tokyo-blue transition-colors"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+                        <button onclick="appData.config.isFlightEditMode=true;renderFlightWidget();" class="absolute top-4 right-4 text-gray-300 hover:text-tokyo-blue transition-colors bg-tokyo-bg p-2 rounded-full"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
                         <p class="text-xs font-bold text-gray-400 tracking-widest uppercase mb-2">${status === 'COUNTDOWN' ? '離登機還有' : (status === 'IN TRIP' ? '離回家還有' : (status === 'ENDED' ? '旅程結束' : '尚無資料'))}</p>
                         <div class="text-6xl font-black text-tokyo-blue tracking-tighter drop-shadow-sm font-mono">${cdText}</div>
                     </div>
 
                     <div class="space-y-4">
-                        <div class="flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-tokyo-bg ${outDate && now > outDate ? 'opacity-50 grayscale' : ''}">
-                            <div class="bg-tokyo-blue text-white p-3 rounded-full shadow-md"><i data-lucide="plane-takeoff" class="w-6 h-6"></i></div>
-                            <div>
-                                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Outbound</p>
-                                <p class="text-xl font-mono font-black text-tokyo-ink">${c.outboundDate ? new Date(c.outboundDate).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '--/-- --:--'}</p>
-                                <p class="text-sm font-bold text-tokyo-gold mt-1 bg-tokyo-ink inline-block px-2 py-0.5 rounded-md">${c.outboundNo || '航班未定'}</p>
+                        <div class="bg-white rounded-2xl border-2 border-tokyo-bg p-5 ${outDate && now > outDate ? 'opacity-60 grayscale' : ''}">
+                            <div class="flex items-start gap-4 mb-3">
+                                <div class="bg-tokyo-blue text-white p-3 rounded-full shadow-md shrink-0"><i data-lucide="plane" class="w-6 h-6"></i></div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Outbound</p>
+                                    <p class="text-xl font-mono font-black text-tokyo-ink">${c.outboundDate ? new Date(c.outboundDate).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '--/-- --:--'}</p>
+                                    <p class="text-sm font-bold text-tokyo-gold mt-1 bg-tokyo-ink inline-block px-2 py-0.5 rounded-md">${c.outboundNo || '航班未定'}</p>
+                                </div>
                             </div>
+                            ${c.outboundNote ? `
+                                <div class="mt-2 pt-3 border-t-2 border-dashed border-tokyo-gray">
+                                    <p class="text-sm text-gray-600 font-bold whitespace-pre-wrap flex gap-2"><i data-lucide="sticky-note" class="w-4 h-4 text-tokyo-blue shrink-0 mt-0.5"></i><span>${c.outboundNote}</span></p>
+                                </div>` : ''}
                         </div>
 
-                        <div class="flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-tokyo-bg ${retDate && now > retDate ? 'opacity-50 grayscale' : ''}">
-                            <div class="bg-tokyo-gold text-tokyo-ink p-3 rounded-full shadow-md"><i data-lucide="plane-landing" class="w-6 h-6"></i></div>
-                            <div>
-                                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Return</p>
-                                <p class="text-xl font-mono font-black text-tokyo-ink">${c.returnDate ? new Date(c.returnDate).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '--/-- --:--'}</p>
-                                <p class="text-sm font-bold text-tokyo-gold mt-1 bg-tokyo-ink inline-block px-2 py-0.5 rounded-md">${c.returnNo || '航班未定'}</p>
+                        <div class="bg-white rounded-2xl border-2 border-tokyo-bg p-5 ${retDate && now > retDate ? 'opacity-60 grayscale' : ''}">
+                            <div class="flex items-start gap-4 mb-3">
+                                <div class="bg-tokyo-gold text-tokyo-ink p-3 rounded-full shadow-md shrink-0"><i data-lucide="plane" class="w-6 h-6" style="transform: scaleX(-1);"></i></div>
+                                <div>
+                                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Return</p>
+                                    <p class="text-xl font-mono font-black text-tokyo-ink">${c.returnDate ? new Date(c.returnDate).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '--/-- --:--'}</p>
+                                    <p class="text-sm font-bold text-tokyo-gold mt-1 bg-tokyo-ink inline-block px-2 py-0.5 rounded-md">${c.returnNo || '航班未定'}</p>
+                                </div>
                             </div>
+                            ${c.returnNote ? `
+                                <div class="mt-2 pt-3 border-t-2 border-dashed border-tokyo-gray">
+                                    <p class="text-sm text-gray-600 font-bold whitespace-pre-wrap flex gap-2"><i data-lucide="sticky-note" class="w-4 h-4 text-tokyo-gold shrink-0 mt-0.5"></i><span>${c.returnNote}</span></p>
+                                </div>` : ''}
                         </div>
                     </div>
                 `;
@@ -1325,8 +1406,10 @@
         function saveFlightSettings() {
             appData.config.outboundDate = document.getElementById('fOutDate').value;
             appData.config.outboundNo = document.getElementById('fOutNo').value;
+            appData.config.outboundNote = document.getElementById('fOutNote').value;
             appData.config.returnDate = document.getElementById('fRetDate').value;
             appData.config.returnNo = document.getElementById('fRetNo').value;
+            appData.config.returnNote = document.getElementById('fRetNote').value;
             appData.config.isFlightEditMode = false;
             saveAll();
             renderFlightWidget();
@@ -1458,7 +1541,7 @@
             lucide.createIcons();
         }
         
-        // --- Render: Itinerary ---
+        // --- Render: Itinerary (Restored & Fixed) ---
         function renderItinerary(dayId) {
             const day = appData.itineraries[dayId];
             document.getElementById('content-area').innerHTML = `
